@@ -144,34 +144,33 @@ def main():
         data_length = 5
 
     train_loader = torch.utils.data.DataLoader(
-        VideoDataSet(args.root_path, args.train_list, num_segments=args.num_segments,
+        TSNDataSetMovie("", args.train_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
-                   image_tmpl=prefix,
+                   image_tmpl="frame_{:04d}.jpg" if args.modality in ["RGB", "RGBDiff"] else args.flow_prefix+"{}_{:05d}.jpg",
                    transform=torchvision.transforms.Compose([
                        train_augmentation,
-                       Stack(roll=(args.arch in ['BNInception', 'InceptionV3'])),
-                       ToTorchFormatTensor(div=(args.arch not in ['BNInception', 'InceptionV3'])),
+                       Stack(roll=args.arch == 'BNInception'),
+                       ToTorchFormatTensor(div=args.arch != 'BNInception'),
                        normalize,
                    ])),
         batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True,
-        drop_last=True)  # prevent something not % n_GPU
+        num_workers=args.workers, pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
-        VideoDataSet(args.root_path, args.val_list, num_segments=args.num_segments,
+        TSNDataSetMovie("", args.val_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
-                   image_tmpl=prefix,
+                   image_tmpl="frame_{:04d}.jpg" if args.modality in ["RGB", "RGBDiff"] else args.flow_prefix+"{}_{:05d}.jpg",
                    random_shift=False,
                    transform=torchvision.transforms.Compose([
                        GroupScale(int(scale_size)),
                        GroupCenterCrop(crop_size),
-                       Stack(roll=(args.arch in ['BNInception', 'InceptionV3'])),
-                       ToTorchFormatTensor(div=(args.arch not in ['BNInception', 'InceptionV3'])),
+                       Stack(roll=args.arch == 'BNInception'),
+                       ToTorchFormatTensor(div=args.arch != 'BNInception'),
                        normalize,
                    ])),
-        batch_size=args.batch_size, shuffle=False,
+        batch_size=int(args.batch_size/2), shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
     # define loss function (criterion) and optimizer
