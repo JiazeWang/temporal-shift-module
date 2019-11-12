@@ -28,8 +28,13 @@ def main():
     global args, best_prec1
     args = parser.parse_args()
 
-    num_class, args.train_list, args.val_list, args.root_path, prefix = dataset_config.return_dataset(args.dataset,
-                                                                                                      args.modality)
+    #num_class, args.train_list, args.val_list, args.root_path, prefix = dataset_config.return_dataset(args.dataset,
+    #                                                                                                  args.modality)
+    num_class = 21
+    args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
+    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
+    args.root_path = ""
+    prefix = "frame_{:04d}.jpg"
     full_arch_name = args.arch
     if args.shift:
         full_arch_name += '_shift{}_{}'.format(args.shift_div, args.shift_place)
