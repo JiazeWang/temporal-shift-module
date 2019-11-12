@@ -20,7 +20,7 @@ from ops.utils import AverageMeter, accuracy
 from ops.temporal_shift import make_temporal_pool
 
 from tensorboardX import SummaryWriter
-
+import datetime
 best_prec1 = 0
 
 
