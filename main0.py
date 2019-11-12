@@ -10,7 +10,7 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
-from ops.dataset_test import TSNDataSetMovie
+from ops.dataset_test import VideoDataSet_movie
 from ops.datasets0 import VideoDataSet
 from ops.models import TSN
 from ops.transforms import *
@@ -144,7 +144,7 @@ def main():
         data_length = 5
 
     train_loader = torch.utils.data.DataLoader(
-        TSNDataSetMovie("", args.train_list, num_segments=args.num_segments,
+        VideoDataSet_movie("", args.train_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
                    image_tmpl="frame_{:04d}.jpg" if args.modality in ["RGB", "RGBDiff"] else args.flow_prefix+"{}_{:05d}.jpg",
@@ -158,7 +158,7 @@ def main():
         num_workers=args.workers, pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
-        TSNDataSetMovie("", args.val_list, num_segments=args.num_segments,
+        VideoDataSet_movie("", args.val_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
                    image_tmpl="frame_{:04d}.jpg" if args.modality in ["RGB", "RGBDiff"] else args.flow_prefix+"{}_{:05d}.jpg",
