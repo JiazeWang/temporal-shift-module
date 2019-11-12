@@ -32,7 +32,7 @@ def main():
     #                                                                                                  args.modality)
     num_class = 21
     args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/ceshi_train.txt"
-    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/ceshi.txt"
+    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/ceshi_val.txt"
     args.root_path = ""
     prefix = "frame_{:04d}.jpg"
     full_arch_name = args.arch
