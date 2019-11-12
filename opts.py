@@ -75,3 +75,9 @@ parser.add_argument('--temporal_pool', default=False, action="store_true", help=
 parser.add_argument('--non_local', default=False, action="store_true", help='add non local block')
 
 parser.add_argument('--dense_sample', default=False, action="store_true", help='use dense sample for video dataset')
+parser.add_argument('--resume_path', type = str, default = 'checkpoints_' + 'record_1' + '/',
+					 help = 'path to latest checkpoint')
+parser.add_argument('--record_path', type = str, default = 'record' + '_' + 'record_1' + '.txt',
+					 help = 'path to latest training records')
+parser.add_argument('--result_path', type = str, default = 'results' + '_' + 'record_1' + '.npy',
+					 help = 'path to latest training records')
