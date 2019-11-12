@@ -153,7 +153,7 @@ def main():
                        Stack(roll=(args.arch in ['BNInception', 'InceptionV3'])),
                        ToTorchFormatTensor(div=(args.arch not in ['BNInception', 'InceptionV3'])),
                        normalize,
-                   ]), dense_sample=args.dense_sample),
+                   ])),
         batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True,
         drop_last=True)  # prevent something not % n_GPU
@@ -170,7 +170,7 @@ def main():
                        Stack(roll=(args.arch in ['BNInception', 'InceptionV3'])),
                        ToTorchFormatTensor(div=(args.arch not in ['BNInception', 'InceptionV3'])),
                        normalize,
-                   ]), dense_sample=args.dense_sample),
+                   ])),
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
