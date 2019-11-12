@@ -5,8 +5,10 @@ import os
 import os.path
 import numpy as np
 from numpy.random import randint
-import random
 import torch
+
+import random
+
 
 class VideoRecord(object):
     def __init__(self, row, number):
@@ -16,10 +18,8 @@ class VideoRecord(object):
         self.root = row[0]
         self.shot = row[1].split(',')
         self.frames = row[2].split(',')
-        #print(row[3])
         self.labelnew = row[3]
-        #self.select = random.randint(0,len(self.frames)-1)
-        self.num_selects = 3
+        self.num_selects = 8
         self.num_shots = len(self.shot)
         tick = ((self.num_shots)-1) / float(self.num_selects)
         self.offsets = int(random.randint(0,int(tick/2)) + tick * number)
@@ -38,229 +38,117 @@ class VideoRecord(object):
     def label(self):
         return self.labelnew
 
-class VideoDebugDataSet(data.Dataset):
-    """
-    """
-    def __len__(self):
-        return 100
 
-    def __getitem__(self, index):
-        np.random.seed(12345)
-        input_tensor = (np.random.random_sample((3,18,224,224)) - 0.5) * 2
-        return torch.from_numpy(input_tensor).to(torch.float), 0
-
-class VideoDataSet_movie(data.Dataset):
+class TSNDataSetMovie(data.Dataset):
     def __init__(self, root_path, list_file,
-                 t_length=32, t_stride=2, num_segments=1,
-                 image_tmpl='img_{:05d}.jpg',
-                 transform=None, style="Dense",
-                 phase="Train"):
-        """
-        :style: Dense, for 2D and 3D model, and Sparse for TSN model
-        :phase: Train, Val, Test
-        """
+                 num_segments=3, new_length=1, modality='RGB',
+                 image_tmpl='img_{:05d}.jpg', transform=None,
+                 force_grayscale=False, random_shift=True, test_mode=False):
 
         self.root_path = root_path
         self.list_file = list_file
-        self.t_length = t_length
-        self.t_stride = t_stride
         self.num_segments = num_segments
+        self.new_length = new_length
+        self.modality = modality
         self.image_tmpl = image_tmpl
         self.transform = transform
-        assert(style in ("Dense", "UnevenDense")), "Only support Dense and UnevenDense"
-        self.style = style
-        self.phase = phase
-        assert(t_length > 0), "Length of time must be bigger than zero."
-        assert(t_stride > 0), "Stride of time must be bigger than zero."
+        self.random_shift = random_shift
+        self.test_mode = test_mode
+
+        if self.modality == 'RGBDiff':
+            self.new_length += 1# Diff needs one more image to calculate diff
 
         self._parse_list()
 
     def _load_image(self, directory, idx):
-        return [Image.open(os.path.join(directory, self.image_tmpl.format(idx))).convert('RGB')]
+        if self.modality == 'RGB' or self.modality == 'RGBDiff':
+            return [Image.open(os.path.join(directory, self.image_tmpl.format(idx))).convert('RGB')]
+        elif self.modality == 'Flow':
+            x_img = Image.open(os.path.join(directory, self.image_tmpl.format('x', idx))).convert('L')
+            y_img = Image.open(os.path.join(directory, self.image_tmpl.format('y', idx))).convert('L')
+            return [x_img, y_img]
 
     def _parse_list(self):
-        #self.video_list = [VideoRecord(x.strip().split(' '), self.root_path) for x in open(self.list_file)]
-        #self.video_list = [VideoRecord(x) for x in open(self.list_file)]
-        # self.video_list = [VideoRecord(x.strip().split(' '), self.root_path) for x in open(self.list_file) if VideoRecord(x.strip().split(' '), self.root_path).num_frames > 240]
-        # print(len(self.video_list))
         self.video_list0 = [VideoRecord(x, 0) for x in open(self.list_file)]
         self.video_list1 = [VideoRecord(x, 1) for x in open(self.list_file)]
         self.video_list2 = [VideoRecord(x, 2) for x in open(self.list_file)]
-
-    @staticmethod
-    def dense_sampler(num_frames, length, stride=1):
-        t_length = length
-        t_stride = stride
-        # compute offsets
-        offset = 0
-        average_duration = num_frames - (t_length - 1) * t_stride - 1
-        if average_duration >= 0:
-            offset = randint(average_duration + 1)
-        elif num_frames > t_length:
-            while(t_stride - 1 > 0):
-                t_stride -= 1
-                average_duration = num_frames - (t_length - 1) * t_stride - 1
-                if average_duration >= 0:
-                    offset = randint(average_duration + 1)
-                    break
-            assert(t_stride >= 1), "temporal stride must be bigger than zero."
-        else:
-            t_stride = 1
-        # sampling
-        samples = []
-        for i in range(t_length):
-            samples.append(offset + i * t_stride + 1)
-        return samples
+        self.video_list3 = [VideoRecord(x, 3) for x in open(self.list_file)]
+        self.video_list4 = [VideoRecord(x, 4) for x in open(self.list_file)]
+        self.video_list5 = [VideoRecord(x, 5) for x in open(self.list_file)]
+        self.video_list6 = [VideoRecord(x, 6) for x in open(self.list_file)]
+        self.video_list7 = [VideoRecord(x, 7) for x in open(self.list_file)]
 
     def _sample_indices(self, record):
         """
         :param record: VideoRecord
         :return: list
         """
-        if self.style == "Dense":
-            frames = []
-            average_duration = record.num_frames / self.num_segments
-            offsets = [average_duration * i for i in range(self.num_segments)]
-            for i in range(self.num_segments):
-                samples = self.dense_sampler(average_duration, self.t_length, self.t_stride)
-                samples = [sample + offsets[i] for sample in samples]
-                frames.extend(samples)
-            return {"dense": frames}
-        elif self.style == "UnevenDense":
-            sparse_frames = []
-            average_duration = record.num_frames / self.num_segments
-            offsets = [average_duration * i for i in range(self.num_segments)]
-            dense_frames = self.dense_sampler(record.num_frames, self.t_length, self.t_stride)
-            dense_seg = -1
-            for i in range(self.num_segments):
-                if dense_frames[self.t_length//2] >= offsets[self.num_segments - i - 1]:
-                    dense_seg = self.num_segments - i - 1
-                    break
-                else:
-                    continue
-            assert(dense_seg != -1)
-            # dense_seg = randint(self.num_segments)
-            for i in range(self.num_segments):
-                # if i == dense_seg:
-                    # samples = self.dense_sampler(average_duration, self.t_length, self.t_stride)
-                    # samples = [sample + offsets[i] for sample in samples]
-                    # dense_frames.extend(samples)
-                    # dense_seg = -1 # set dense seg to -1 and check after sampling.
-                if i != dense_seg:
-                    samples = self.dense_sampler(average_duration, 1)
-                    samples = [sample + offsets[i] for sample in samples]
-                    sparse_frames.extend(samples)
-            return {"dense":dense_frames, "sparse":sparse_frames}
+
+        average_duration = (record.num_frames - self.new_length + 1) // self.num_segments
+        if average_duration > 0:
+            offsets = np.multiply(list(range(self.num_segments)), average_duration) + randint(average_duration, size=self.num_segments)
+        elif record.num_frames > self.num_segments:
+            offsets = np.sort(randint(record.num_frames - self.new_length + 1, size=self.num_segments))
         else:
-            return
+            offsets = np.zeros((self.num_segments,))
+        return offsets + 1
 
     def _get_val_indices(self, record):
-        """
-        get indices in val phase
-        """
-        # valid_offset_range = record.num_frames - (self.t_length - 1) * self.t_stride - 1
-        valid_offset_range = record.num_frames - (self.t_length - 1) * self.t_stride - 1
-        offset = int(valid_offset_range / 2.0)
-        if offset < 0:
-            offset = 0
-        samples = []
-        for i in range(self.t_length):
-            samples.append(offset + i * self.t_stride + 1)
-        return {"dense": samples}
+        if record.num_frames > self.num_segments + self.new_length - 1:
+            tick = (record.num_frames - self.new_length + 1) / float(self.num_segments)
+            offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
+        else:
+            offsets = np.zeros((self.num_segments,))
+        return offsets + 1
 
     def _get_test_indices(self, record):
-        """
-        get indices in test phase
-        """
-        valid_offset_range = record.num_frames - (self.t_length - 1) * self.t_stride - 1
-        interval = valid_offset_range / (self.num_segments - 1)
-        offsets = []
-        for i in range(self.num_segments):
-            offset = int(i * interval)
-            if offset > valid_offset_range:
-                offset = valid_offset_range
-            if offset < 0:
-                offset = 0
-            offsets.append(offset + 1)
-        frames = []
-        for i in range(self.num_segments):
-            for j in range(self.t_length):
-                frames.append(offsets[i] + j*self.t_stride)
-                # frames.append(offsets[i]+j)
-        return {"dense": frames}
+
+        tick = (record.num_frames - self.new_length + 1) / float(self.num_segments)
+
+        offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
+
+        return offsets + 1
 
     def __getitem__(self, index):
         data = []
         data0, label0 = self.get_item_once(index,self.video_list0)
         data1, label0 = self.get_item_once(index,self.video_list1)
         data2, label0 = self.get_item_once(index,self.video_list2)
+        data3, label0 = self.get_item_once(index,self.video_list3)
+        data4, label0 = self.get_item_once(index,self.video_list4)
+        data5, label0 = self.get_item_once(index,self.video_list5)
+        data6, label0 = self.get_item_once(index,self.video_list6)
+        data7, label0 = self.get_item_once(index,self.video_list7)
         data.extend(data0)
         data.extend(data1)
         data.extend(data2)
+        data.extend(data3)
+        data.extend(data4)
+        data.extend(data5)
+        data.extend(data6)
+        data.extend(data7)
         process_data = self.transform(data)
         return process_data, label0
 
     def get_item_once(self, index, list):
         record = list[index]
-
-        if self.phase == "Train":
-            indices = self._sample_indices(record)
-            return self.get(record, indices, self.phase)
-        elif self.phase == "Val":
-            indices = self._get_val_indices(record)
-            return self.get(record, indices, self.phase)
-        elif self.phase == "Test":
-            indices = self._get_test_indices(record)
-            return self.get(record, indices, self.phase)
+        if not self.test_mode:
+            segment_indices = self._sample_indices(record) if self.random_shift else self._get_val_indices(record)
         else:
-            raise TypeError("Unsuported phase {}".format(self.phase))
+            segment_indices = self._get_test_indices(record)
+        return self.get(record, segment_indices)
 
-    def get(self, record, indices, phase):
-        # dense process data
-        def dense_process_data():
-            images = list()
-            for ind in indices['dense']:
-                ptr = (int(ind)-1)*4
-                if ptr <= record.num_frames:
-                    imgs = self._load_image(record.path, ptr)
-                else:
-                    #imgs = self._load_image(record.path, record.num_frames)
-                    pnew = (int(record.num_frames)-1)*4
-                    imgs = self._load_image(record.path, pnew)
-                images.extend(imgs)
-            return images
-        # unevendense process data
-        def unevendense_process_data():
-            dense_images = list()
-            sparse_images = list()
-            for ind in indices['dense']:
-                ptr = (int(ind)-1)*4
-                if ptr <= record.num_frames:
-                    imgs = self._load_image(record.path, ptr)
-                else:
-                    pnew = (int(record.num_frames)-1)*4
-                    imgs = self._load_image(record.path, pnew)
-                    #imgs = self._load_image(record.path, record.num_frames)
-                dense_images.extend(imgs)
-            for ind in indices['sparse']:
-                ptr = (int(ind)-1)*4
-                if ptr <= record.num_frames:
-                    imgs = self._load_image(record.path, ptr)
-                else:
-                    #imgs = self._load_image(record.path, record.num_frames)
-                    pnew = (int(record.num_frames)-1)*4
-                    imgs = self._load_image(record.path, pnew)
-                sparse_images.extend(imgs)
 
-            images = dense_images + sparse_images
-            return images
-        if phase == "Train":
-            if self.style == "Dense":
-                process_data = dense_process_data()
-            elif self.style == "UnevenDense":
-                process_data = unevendense_process_data()
-        elif phase in ("Val", "Test"):
-            process_data = dense_process_data()
+    def get(self, record, indices):
+
+        images = list()
+        for seg_ind in indices:
+            p = (int(seg_ind)-1)*4
+            for i in range(self.new_length):
+                seg_imgs = self._load_image(record.path, p)
+                images.extend(seg_imgs)
+                if p < record.num_frames:
+                    p += 1
         #process_data = self.transform(images)
         newlabel = []
         #for line in record.label:
@@ -268,77 +156,7 @@ class VideoDataSet_movie(data.Dataset):
         labelnew = np.zeros([21])
         for i in labels:
             labelnew[i] = 1
-        labelnew = torch.FloatTensor(labelnew)
-        return process_data, labelnew
+        return images, labelnew
 
     def __len__(self):
         return len(self.video_list0)
-
-class ShortVideoDataSet_movie(VideoDataSet_movie):
-    def __init__(self, root_path, list_file,
-                 t_length=32, t_stride=2, num_segments=1,
-                 image_tmpl='img_{:05d}.jpg',
-                 transform=None, style="Dense",
-                 phase="Train"):
-        """
-        :style: Dense, for 2D and 3D model, and Sparse for TSN model
-        :phase: Train, Val, Test
-        """
-
-        super(ShortVideoDataSet_movie, self).__init__(root_path,
-            list_file, t_length, t_stride, num_segments,
-            image_tmpl, transform, style, phase)
-
-
-    def _get_val_indices(self, record):
-        """
-        get indices in val phase
-        """
-        # valid_offset_range = record.num_frames - (self.t_length - 1) * self.t_stride - 1
-        t_stride = self.t_stride
-        valid_offset_range = record.num_frames - (self.t_length - 1) * t_stride - 1
-        offset = int(valid_offset_range / 2.0)
-
-        if record.num_frames > self.t_length:
-            while(offset < 0 and t_stride > 1):
-                t_stride -= 1
-                valid_offset_range = record.num_frames - (self.t_length - 1) * t_stride - 1
-                offset = int(valid_offset_range / 2.0)
-        else:
-            t_stride = 1
-            valid_offset_range = record.num_frames - (self.t_length - 1) * t_stride - 1
-            offset = int(valid_offset_range / 2.0)
-
-        if offset < 0:
-            offset = 0
-        samples = []
-        for i in range(self.t_length):
-            samples.append(offset + i * t_stride + 1)
-        return {"dense": samples}
-
-    def _get_test_indices(self, record):
-        """
-        get indices in test phase
-        """
-        t_stride = self.t_stride
-        valid_offset_range = record.num_frames - (self.t_length - 1) * t_stride - 1
-        while(valid_offset_range < (self.num_segments - 1) and t_stride > 1):
-            t_stride -= 1
-            valid_offset_range = record.num_frames - (self.t_length - 1) * t_stride - 1
-        if valid_offset_range < 0:
-            valid_offset_range = 0
-        interval = valid_offset_range / (self.num_segments - 1)
-        offsets = []
-        for i in range(self.num_segments):
-            offset = int(i * interval)
-            if offset > valid_offset_range+1:
-                offset = valid_offset_range+1
-            if offset < 0:
-                offset = 0
-            offsets.append(offset + 1)
-        frames = []
-        for i in range(self.num_segments):
-            for j in range(self.t_length):
-                frames.append(offsets[i] + j * t_stride)
-                # frames.append(offsets[i]+j)
-        return {"dense": frames}
