@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
 
-from ops.datasets0 import TSNDataSet
+from ops.datasets0 import VideoDataSet
 from ops.models import TSN
 from ops.transforms import *
 from opts import parser
@@ -144,7 +144,7 @@ def main():
         data_length = 5
 
     train_loader = torch.utils.data.DataLoader(
-        TSNDataSet(args.root_path, args.train_list, num_segments=args.num_segments,
+        VideoDataSet(args.root_path, args.train_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
                    image_tmpl=prefix,
@@ -159,7 +159,7 @@ def main():
         drop_last=True)  # prevent something not % n_GPU
 
     val_loader = torch.utils.data.DataLoader(
-        TSNDataSet(args.root_path, args.val_list, num_segments=args.num_segments,
+        VideoDataSet(args.root_path, args.val_list, num_segments=args.num_segments,
                    new_length=data_length,
                    modality=args.modality,
                    image_tmpl=prefix,
