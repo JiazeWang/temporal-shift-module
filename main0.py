@@ -55,7 +55,7 @@ def main():
         args.store_name += '_{}'.format(args.suffix)
     print('storing name: ' + args.store_name)
 
-    check_rootfolders()
+    #check_rootfolders()
 
     model = TSN(num_class, args.num_segments, args.modality,
                 base_model=args.arch,
