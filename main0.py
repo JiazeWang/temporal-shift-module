@@ -31,8 +31,8 @@ def main():
     #num_class, args.train_list, args.val_list, args.root_path, prefix = dataset_config.return_dataset(args.dataset,
     #                                                                                                  args.modality)
     num_class = 21
-    args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
-    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
+    args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/ceshi_train.txt"
+    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/ceshi.txt"
     args.root_path = ""
     prefix = "frame_{:04d}.jpg"
     full_arch_name = args.arch
