@@ -176,7 +176,7 @@ def main():
                        ToTorchFormatTensor(div=args.arch != 'BNInception'),
                        normalize,
                    ])),
-        batch_size=int(1), shuffle=False,
+        batch_size=int(16), shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
     # define loss function (criterion) and optimizer
