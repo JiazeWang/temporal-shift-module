@@ -322,7 +322,7 @@ def validate(val_loader, model, criterion, logger=None):
         loss = 0
         losses = 0
         #losses += loss.item()
-        output = output.reshpe(8,21).mean(axis = 0, keepdims=True)
+        output = output.reshape(8,21).mean(axis = 0, keepdims=True)
         if i == 0:
             output_mtx = output.data.cpu().numpy()
         else:
