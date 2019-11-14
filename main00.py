@@ -338,7 +338,7 @@ def validate(val_loader, model, criterion, logger=None):
         label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
-        output_mtx = output_mtx.reshape(8,-1, 21).mean(0).squeeze(0)
+        output_mtx = output_mtx.reshape(8,-1, 21).mean(0).squeeze(axis=0)
         mAP = 0
         print("labels.shape:", labels.shape)
         print("output_mtx.shape:", output_mtx.shape)
