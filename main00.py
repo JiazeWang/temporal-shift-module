@@ -324,9 +324,9 @@ def validate(val_loader, model, criterion, logger=None):
         #losses += loss.item()
         if i == 0:
             output_mtx = output.data.cpu().numpy()
-            output_mtx = output_mtx.mean(0)
+            #output_mtx = output_mtx.mean(0)
         else:
-            output = output.mean(0)
+            #output = output.mean(0)
             output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=0)
         # measure accuracy and record loss
         # measure elapsed time
@@ -338,6 +338,7 @@ def validate(val_loader, model, criterion, logger=None):
         label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
+        output_mtx = output_mtx.reshape(8,-1, 21).mean(0).squeeze(0)
         mAP = 0
         print("labels.shape:", labels.shape)
         print("output_mtx.shape:", output_mtx.shape)
