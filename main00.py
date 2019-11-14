@@ -176,7 +176,7 @@ def main():
                        ToTorchFormatTensor(div=args.arch != 'BNInception'),
                        normalize,
                    ])),
-        batch_size=int(16), shuffle=False,
+        batch_size=int(1), shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
     # define loss function (criterion) and optimizer
@@ -271,6 +271,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
         target = target.cuda(non_blocking=True)
         input_var = torch.autograd.Variable(input).float()
+
         target_var = torch.autograd.Variable(target).float()
         #print("target_var.shape:",target_var.size())
         #print(target_var[0])
@@ -315,12 +316,15 @@ def validate(val_loader, model, criterion, logger=None):
         target_var = torch.autograd.Variable(target, volatile=True).float()
 
         # compute output
+        input_var = input_var.view(8, -1, input_var.size(2), input_var.size(3))
         output = model(input_var).float()
         loss = criterion(output, target_var)
         losses += loss.item()
         if i == 0:
             output_mtx = output.data.cpu().numpy()
+            output_mtx = output_mtx.mean(0)
         else:
+            output = output.mean(0)
             output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=0)
         # measure accuracy and record loss
         # measure elapsed time
