@@ -318,8 +318,10 @@ def validate(val_loader, model, criterion, logger=None):
         # compute output
         input_var = input_var.view(8, -1, input_var.size(2), input_var.size(3))
         output = model(input_var).float()
-        loss = criterion(output, target_var)
-        losses += loss.item()
+        #loss = criterion(output, target_var)
+        loss = 0
+        losses = 0
+        #losses += loss.item()
         if i == 0:
             output_mtx = output.data.cpu().numpy()
             output_mtx = output_mtx.mean(0)
@@ -341,6 +343,8 @@ def validate(val_loader, model, criterion, logger=None):
         print("output_mtx.shape:", output_mtx.shape)
         if i == len(val_loader)-1:
             mAP = get_map(labels, output_mtx)
+            np.save("val.npy", output_mtx)
+            print("saving down")
 
     return losses / (i+1), mAP, output_mtx
 
