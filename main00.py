@@ -328,6 +328,7 @@ def validate(val_loader, model, criterion, logger=None):
         else:
             output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=0)
         label_path = '/home/jzwang/code/RGB-FLOW/movie_new/data/datanew/val.npy'
+        labels = np.load(label_path)
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.n/home/jzwang/code/RGB-FLOW/movie_new/data/datanew/abels = np.load(label_path)
         output_mtxnew = output_mtx
         mAP = 0
