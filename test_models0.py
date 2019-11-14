@@ -66,7 +66,7 @@ def parse_shift_option_from_log_name(log_name):
     else:
         return False, None, None
 
-
+"""
 weights_list = args.weights.split(',')
 #test_segments_list = [int(s) for s in args.test_segments.split(',')]
 test_segments_list = [8]
@@ -95,79 +95,80 @@ for this_weights, this_test_segments, test_file in zip(weights_list, test_segmen
         modality = 'Flow'
     this_arch = this_weights.split('TSM_')[1].split('_')[2]
     modality_list.append(modality)
+"""
+is_shift = 1
+net = TSN(num_class, 8 if is_shift else 1, modality,
+          base_model="resnet50",
+          consensus_type=args.crop_fusion_type,
+          img_feature_dim=args.img_feature_dim,
+          pretrain=args.pretrain,
+          is_shift=is_shift, shift_div=shift_div, shift_place=shift_place,
+          non_local='_nl' in this_weights,
+          )
 
-    net = TSN(num_class, this_test_segments if is_shift else 1, modality,
-              base_model=this_arch,
-              consensus_type=args.crop_fusion_type,
-              img_feature_dim=args.img_feature_dim,
-              pretrain=args.pretrain,
-              is_shift=is_shift, shift_div=shift_div, shift_place=shift_place,
-              non_local='_nl' in this_weights,
-              )
+if 'tpool' in this_weights:
+    from ops.temporal_shift import make_temporal_pool
+    make_temporal_pool(net.base_model, this_test_segments)  # since DataParallel
 
-    if 'tpool' in this_weights:
-        from ops.temporal_shift import make_temporal_pool
-        make_temporal_pool(net.base_model, this_test_segments)  # since DataParallel
+checkpoint = torch.load(this_weights)
+checkpoint = checkpoint['state_dict']
 
-    checkpoint = torch.load(this_weights)
-    checkpoint = checkpoint['state_dict']
+# base_dict = {('base_model.' + k).replace('base_model.fc', 'new_fc'): v for k, v in list(checkpoint.items())}
+base_dict = {'.'.join(k.split('.')[1:]): v for k, v in list(checkpoint.items())}
+replace_dict = {'base_model.classifier.weight': 'new_fc.weight',
+                'base_model.classifier.bias': 'new_fc.bias',
+                }
+for k, v in replace_dict.items():
+    if k in base_dict:
+        base_dict[v] = base_dict.pop(k)
 
-    # base_dict = {('base_model.' + k).replace('base_model.fc', 'new_fc'): v for k, v in list(checkpoint.items())}
-    base_dict = {'.'.join(k.split('.')[1:]): v for k, v in list(checkpoint.items())}
-    replace_dict = {'base_model.classifier.weight': 'new_fc.weight',
-                    'base_model.classifier.bias': 'new_fc.bias',
-                    }
-    for k, v in replace_dict.items():
-        if k in base_dict:
-            base_dict[v] = base_dict.pop(k)
+net.load_state_dict(base_dict)
 
-    net.load_state_dict(base_dict)
+input_size = net.scale_size if args.full_res else net.input_size
+if args.test_crops == 1:
+    cropping = torchvision.transforms.Compose([
+        GroupScale(net.scale_size),
+        GroupCenterCrop(input_size),
+    ])
+elif args.test_crops == 3:  # do not flip, so only 5 crops
+    cropping = torchvision.transforms.Compose([
+        GroupFullResSample(input_size, net.scale_size, flip=False)
+    ])
+elif args.test_crops == 5:  # do not flip, so only 5 crops
+    cropping = torchvision.transforms.Compose([
+        GroupOverSample(input_size, net.scale_size, flip=False)
+    ])
+elif args.test_crops == 10:
+    cropping = torchvision.transforms.Compose([
+        GroupOverSample(input_size, net.scale_size)
+    ])
+else:
+    raise ValueError("Only 1, 5, 10 crops are supported while we got {}".format(args.test_crops))
 
-    input_size = net.scale_size if args.full_res else net.input_size
-    if args.test_crops == 1:
-        cropping = torchvision.transforms.Compose([
-            GroupScale(net.scale_size),
-            GroupCenterCrop(input_size),
-        ])
-    elif args.test_crops == 3:  # do not flip, so only 5 crops
-        cropping = torchvision.transforms.Compose([
-            GroupFullResSample(input_size, net.scale_size, flip=False)
-        ])
-    elif args.test_crops == 5:  # do not flip, so only 5 crops
-        cropping = torchvision.transforms.Compose([
-            GroupOverSample(input_size, net.scale_size, flip=False)
-        ])
-    elif args.test_crops == 10:
-        cropping = torchvision.transforms.Compose([
-            GroupOverSample(input_size, net.scale_size)
-        ])
-    else:
-        raise ValueError("Only 1, 5, 10 crops are supported while we got {}".format(args.test_crops))
+data_loader = torch.utils.data.DataLoader(
+        TSNDataSetMovie(root_path, test_file if test_file is not None else val_list, num_segments=this_test_segments,
+                   new_length=1 if modality == "RGB" else 5,
+                   modality=modality,
+                   image_tmpl=prefix,
+                   test_mode=True,
+                   remove_missing=len(weights_list) == 1,
+                   transform=torchvision.transforms.Compose([
+                       cropping,
+                       Stack(roll=(this_arch in ['BNInception', 'InceptionV3'])),
+                       ToTorchFormatTensor(div=(this_arch not in ['BNInception', 'InceptionV3'])),
+                       GroupNormalize(net.input_mean, net.input_std),
+                   ])),
+        batch_size=16, shuffle=False,
+        num_workers=args.workers, pin_memory=True,
+)
 
-    data_loader = torch.utils.data.DataLoader(
-            TSNDataSetMovie(root_path, test_file if test_file is not None else val_list, num_segments=this_test_segments,
-                       new_length=1 if modality == "RGB" else 5,
-                       modality=modality,
-                       image_tmpl=prefix,
-                       test_mode=True,
-                       remove_missing=len(weights_list) == 1,
-                       transform=torchvision.transforms.Compose([
-                           cropping,
-                           Stack(roll=(this_arch in ['BNInception', 'InceptionV3'])),
-                           ToTorchFormatTensor(div=(this_arch not in ['BNInception', 'InceptionV3'])),
-                           GroupNormalize(net.input_mean, net.input_std),
-                       ])),
-            batch_size=16, shuffle=False,
-            num_workers=args.workers, pin_memory=True,
-    )
+if args.gpus is not None:
+    devices = [args.gpus[i] for i in range(args.workers)]
+else:
+    devices = list(range(args.workers))
 
-    if args.gpus is not None:
-        devices = [args.gpus[i] for i in range(args.workers)]
-    else:
-        devices = list(range(args.workers))
-
-    net = torch.nn.DataParallel(net.cuda())
-    net.eval()
+net = torch.nn.DataParallel(net.cuda())
+net.eval()
 
 #proc_start_time = time.time()
 #max_num = args.max_num if args.max_num > 0 else len(data_loader.dataset)
