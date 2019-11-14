@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
 #from ops.dataset_test import TSNDataSetMovie
-from ops.datasets import TSNDataSet
+from ops.dataset import TSNDataSet
 from ops.models import TSN
 from ops.transforms import *
 from opts import parser
