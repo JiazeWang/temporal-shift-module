@@ -23,7 +23,7 @@ parser.add_argument('dataset', type=str)
 
 # may contain splits
 parser.add_argument('--weights', type=str, default=None)
-parser.add_argument('--test_segments', type=str, default=25)
+parser.add_argument('--test_segments', type=str, default=8)
 parser.add_argument('--dense_sample', default=False, action="store_true", help='use dense sample as I3D')
 parser.add_argument('--full_res', default=False, action="store_true",
                     help='use full resolution 256x256 for test as in Non-local I3D')
