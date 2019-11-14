@@ -68,7 +68,8 @@ def parse_shift_option_from_log_name(log_name):
 
 
 weights_list = args.weights.split(',')
-test_segments_list = [int(s) for s in args.test_segments.split(',')]
+#test_segments_list = [int(s) for s in args.test_segments.split(',')]
+test_segments_list = [8]
 assert len(weights_list) == len(test_segments_list)
 if args.coeff is None:
     coeff_list = [1] * len(weights_list)
