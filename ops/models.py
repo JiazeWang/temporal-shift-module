@@ -256,9 +256,9 @@ class TSN(nn.Module):
 
         if self.reshape:
             if self.is_shift and self.temporal_pool:
-                base_out = base_out.view((-1, self.num_segments // 2 * 3) + base_out.size()[1:])
+                base_out = base_out.view((-1, self.num_segments // 2 * 8) + base_out.size()[1:])
             else:
-                base_out = base_out.view((-1, self.num_segments * 3) + base_out.size()[1:])
+                base_out = base_out.view((-1, self.num_segments * 8) + base_out.size()[1:])
             output = self.consensus(base_out)
             return output.squeeze(1)
 
