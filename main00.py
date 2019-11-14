@@ -338,13 +338,13 @@ def validate(val_loader, model, criterion, logger=None):
         label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
-        output_mtx = output_mtx.reshape(8,-1, 21).mean(0)
+        output_mtxnew = output_mtx.reshape(8,-1, 21).mean(0)
         mAP = 0
         print("labels.shape:", labels.shape)
-        print("output_mtx.shape:", output_mtx.shape)
+        print("output_mtxnew.shape:", output_mtxnew.shape)
         if i == len(val_loader)-1:
-            mAP = get_map(labels, output_mtx)
-            np.save("val.npy", output_mtx)
+            mAP = get_map(labels, output_mtxnew)
+            np.save("val.npy", output_mtxnew)
             print("saving down")
 
     return losses / (i+1), mAP, output_mtx
