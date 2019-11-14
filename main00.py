@@ -225,9 +225,7 @@ def main():
 
     print ('************ Done!... ************')
             # train for one epoch
-        start_time = time.time()
-        trainloss = train(train_loader, model, criterion, optimizer, epoch)
-        print('Traing loss %4f Epoch %d'% (trainloss, epoch))
+
 
 
 def class_precision(scores, labels):
