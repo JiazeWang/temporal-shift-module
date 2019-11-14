@@ -56,6 +56,17 @@ args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.txt"
 args.root_path = ""
 prefix = "frame_{:04d}.jpg"
 
+def parse_shift_option_from_log_name(log_name):
+    if 'shift' in log_name:
+        strings = log_name.split('_')
+        for i, s in enumerate(strings):
+            if 'shift' in s:
+                break
+        return True, int(strings[i].replace('shift', '')), strings[i + 1]
+    else:
+        return False, None, None
+
+
 weights_list = args.weights.split(',')
 test_segments_list = [int(s) for s in args.test_segments.split(',')]
 assert len(weights_list) == len(test_segments_list)
