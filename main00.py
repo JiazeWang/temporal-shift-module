@@ -22,7 +22,13 @@ from ops.temporal_shift import make_temporal_pool
 from tensorboardX import SummaryWriter
 import datetime
 best_prec1 = 0
+from sklearn.metrics import average_precision_score
 
+def get_map(output, target):
+    n_sample, n_label = output.shape
+    class_ap = average_precision_score(
+        target, output, average=None)
+    return class_ap.mean()
 
 def main():
     global args, best_prec1
@@ -190,15 +196,15 @@ def main():
         adjust_learning_rate(optimizer, epoch, args.lr_steps)
 
     if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
-        valloss, mAP, wAP, output_mtx = validate(val_loader, model, criterion)
+        valloss, mAP,  output_mtx = validate(val_loader, model, criterion)
         end_time = time.time()
         epoch_time = end_time - start_time
         total_time = end_time - zero_time
         print ('Total time used: %s Epoch %d time uesd: %s'%(
                 str(datetime.timedelta(seconds=int(total_time))),
                 epoch, str(datetime.timedelta(seconds=int(epoch_time)))))
-        print ('Train loss: {0:.4f} val loss: {1:.4f} mAP: {2:.4f} wAP: {3:.4f}'.format(
-                    trainloss, valloss, mAP, wAP))
+        print ('Train loss: {0:.4f} val loss: {1:.4f} mAP: {2:.4f}'.format(
+                    trainloss, valloss, mAP))
         # evaluate on validation set
         is_best = mAP > best_map
         #if mAP > best_map:
@@ -253,6 +259,7 @@ def compute_map(labels, test_scores):
     mAP = np.mean(ap_all)
     #print(ap_all)
     #print(mAP)
+
     wAP = np.sum(ap_all*np.sum(labels,0))/np.sum(labels);
     return mAP, wAP
 
@@ -329,9 +336,9 @@ def validate(val_loader, model, criterion, logger=None):
         labels = np.load(label_path)
         #print("labels.shape:", labels.shape)
         #print("output_mtx.shape:", output_mtx.shape)
-        mAP, wAP = compute_map(labels, output_mtx)
+        mAP = get_map(labels, output_mtx)
 
-    return losses / (i+1), mAP, wAP, output_mtx
+    return losses / (i+1), mAP, output_mtx
 
 
 def save_checkpoint(state, is_best, epoch):
