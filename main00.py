@@ -335,7 +335,7 @@ def validate(val_loader, model, criterion, logger=None):
         print("labels.shape:", labels.shape)
         print("output_mtxnew.shape:", output_mtxnew.shape)
         if i == len(val_loader)-1:
-            np.save("val.npy", output_mtxnew)
+            print(i, len(val_loader))
             mAP = get_map(labels, output_mtxnew)
             np.save("val.npy", output_mtxnew)
             print("saving down")
