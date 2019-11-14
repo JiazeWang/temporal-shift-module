@@ -325,7 +325,7 @@ def validate(val_loader, model, criterion, logger=None):
         if i == 0:
             output_mtx = output.data.cpu().numpy()
         else:
-            output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=0)
+            output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=1)
         label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
