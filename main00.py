@@ -316,7 +316,7 @@ def validate(val_loader, model, criterion, logger=None):
         target_var = torch.autograd.Variable(target, volatile=True).float()
 
         # compute output
-        input_var = input_var.view(8, -1, input_var.size(2), input_var.size(3))
+        #input_var = input_var.view(8, -1, input_var.size(2), input_var.size(3))
         output = model(input_var).float()
         #loss = criterion(output, target_var)
         loss = 0
@@ -329,12 +329,13 @@ def validate(val_loader, model, criterion, logger=None):
         label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
-        output_mtxnew = output_mtx.reshape(8,-1, 21).mean(axis=0)
+        #output_mtxnew = output_mtx.reshape(8,-1, 21).mean(axis=0)
+        output_mtxnew = output_mtx
         mAP = 0
         print("labels.shape:", labels.shape)
         print("output_mtxnew.shape:", output_mtxnew.shape)
         if i == len(val_loader)-1:
-            np.save("val.npy", output_mtxnew)
+            #np.save("val.npy", output_mtxnew)
             mAP = get_map(labels, output_mtxnew)
             np.save("val.npy", output_mtxnew)
             print("saving down")
