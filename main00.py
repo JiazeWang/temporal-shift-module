@@ -316,7 +316,7 @@ def validate(val_loader, model, criterion, logger=None):
         target_var = torch.autograd.Variable(target, volatile=True).float()
 
         # compute output
-        input_var = input_var.view(8, -1, input_var.size(2), input_var.size(3))
+        input_var = input_var.view(-1, 8, input_var.size(2), input_var.size(3))
         output = model(input_var).float()
         #loss = criterion(output, target_var)
         loss = 0
