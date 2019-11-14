@@ -31,7 +31,7 @@ parser.add_argument('--full_res', default=False, action="store_true",
 parser.add_argument('--test_crops', type=int, default=1)
 parser.add_argument('--coeff', type=str, default=None)
 parser.add_argument('--batch_size', type=int, default=1)
-parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
                     help='number of data loading workers (default: 8)')
 
 # for true test
@@ -50,6 +50,11 @@ parser.add_argument('--pretrain', type=str, default='imagenet')
 
 args = parser.parse_args()
 
+
+args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
+args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.txt"
+args.root_path = ""
+prefix = "frame_{:04d}.jpg"
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -195,36 +200,6 @@ for this_weights, this_test_segments, test_file in zip(weights_list, test_segmen
 
     net = torch.nn.DataParallel(net.cuda())
     net.eval()
-
-def eval_video(video_data):
-    i, data, label = video_data
-    num_crop = args.test_crops
-
-    if args.modality == 'RGB':
-        length = 3
-    elif args.modality == 'Flow':
-        length = 10
-    elif args.modality == 'RGBDiff':
-        length = 18
-    else:
-        raise ValueError("Unknown modality "+args.modality)
-
-    input_var = torch.autograd.Variable(data.view(-1, length, data.size(2), data.size(3)),
-                                        volatile=True)
-    rst = net(input_var)
-    if args.softmax==1:
-        # take the softmax to normalize the output to probability
-        rst = F.softmax(rst)
-
-    rst = rst.data.cpu().numpy().copy()
-
-    if args.crop_fusion_type in ['TRN','TRNmultiscale']:
-        rst = rst.reshape(-1, 1, num_class)
-    else:
-        rst = rst.reshape((num_crop, args.test_segments, num_class)).mean(axis=0).reshape((args.test_segments, 1, num_class))
-
-    return i, rst, label[0]
-
 
 #proc_start_time = time.time()
 #max_num = args.max_num if args.max_num > 0 else len(data_loader.dataset)
