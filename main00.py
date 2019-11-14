@@ -10,8 +10,8 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
-from ops.dataset_test import TSNDataSetMovie
-from ops.datasets0 import VideoDataSet
+#from ops.dataset_test import TSNDataSetMovie
+from ops.datasets import TSNDataSet
 from ops.models import TSN
 from ops.transforms import *
 from opts import parser
@@ -37,8 +37,8 @@ def main():
     #num_class, args.train_list, args.val_list, args.root_path, prefix = dataset_config.return_dataset(args.dataset,
     #                                                                                                  args.modality)
     num_class = 21
-    args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
-    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.txt"
+    args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_val_new.txt"
+    args.val_list = "/home/jzwang/code/RGB-FLOW/movie_new/data/datanew/movie_val_new.txt"
     args.root_path = ""
     prefix = "frame_{:04d}.jpg"
     full_arch_name = args.arch
@@ -316,20 +316,19 @@ def validate(val_loader, model, criterion, logger=None):
         target_var = torch.autograd.Variable(target, volatile=True).float()
 
         # compute output
-        input_var = input_var.view(-1, 24, input_var.size(2), input_var.size(3))
+        #input_var = input_var.view(-1, 24, input_var.size(2), input_var.size(3))
         output = model(input_var).float()
         #loss = criterion(output, target_var)
         loss = 0
         losses = 0
         #losses += loss.item()
-        output = output.data.cpu().numpy().reshape(8,21).mean(axis = 0, keepdims=True)
+        #output = output.data.cpu().numpy().reshape(8,21).mean(axis = 0, keepdims=True)
         if i == 0:
-            output_mtx = output
+            output_mtx = output.data.cpu().numpy()
         else:
-            output_mtx = np.concatenate((output_mtx, output), axis=0)
-        label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
-        #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
-        labels = np.load(label_path)
+            output_mtx = np.concatenate((output_mtx, output.data.cpu().numpy()), axis=0)
+        label_path = '/home/jzwang/code/RGB-FLOW/movie_new/data/datanew/val.npy'
+        #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.n/home/jzwang/code/RGB-FLOW/movie_new/data/datanew/abels = np.load(label_path)
         output_mtxnew = output_mtx
         mAP = 0
         print("labels.shape:", labels.shape)
