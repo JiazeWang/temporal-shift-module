@@ -190,7 +190,7 @@ class TSNDataSet(data.Dataset):
 
         images = list()
         for seg_ind in indices:
-            p = int(seg_ind)
+            p = (int(seg_ind)-1)*4
             for i in range(self.new_length):
                 seg_imgs = self._load_image(record.path, p)
                 images.extend(seg_imgs)
