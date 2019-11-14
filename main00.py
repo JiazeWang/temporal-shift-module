@@ -193,37 +193,37 @@ def main():
     best_map = 0
     print ('Start training...')
     for epoch in range(args.start_epoch, args.epochs):
-        adjust_learning_rate(optimizer, epoch, args.lr_steps)
+        #adjust_learning_rate(optimizer, epoch, args.lr_steps)
 
-    if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
-        valloss, mAP,  output_mtx = validate(val_loader, model, criterion)
-        end_time = time.time()
-        epoch_time = end_time - start_time
-        total_time = end_time - zero_time
-        print ('Total time used: %s Epoch %d time uesd: %s'%(
-                str(datetime.timedelta(seconds=int(total_time))),
-                epoch, str(datetime.timedelta(seconds=int(epoch_time)))))
-        print ('Train loss: {0:.4f} val loss: {1:.4f} mAP: {2:.4f}'.format(
-                    trainloss, valloss, mAP))
-        # evaluate on validation set
-        is_best = mAP > best_map
-        #if mAP > best_map:
-            #best_map = mAP
-            # checkpoint_name = "%04d_%s" % (epoch+1, "checkpoint.pth.tar")
-        checkpoint_name = "best_checkpoint.pth.tar"
-        save_checkpoint({
-            'epoch': epoch+1,
-            'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            }, is_best, epoch)
-        np.save("val.npy", output_mtx)
-    with open(args.record_path, 'a') as file:
-        file.write('Epoch:[{0}]'
-               'Train loss: {1:.4f} val loss: {2:.4f} map: {3:.4f}\n'.format(
-                epoch+1, trainloss, valloss, mAP))
+        if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
+            valloss, mAP,  output_mtx = validate(val_loader, model, criterion)
+            end_time = time.time()
+            epoch_time = end_time - start_time
+            total_time = end_time - zero_time
+            print ('Total time used: %s Epoch %d time uesd: %s'%(
+                    str(datetime.timedelta(seconds=int(total_time))),
+                    epoch, str(datetime.timedelta(seconds=int(epoch_time)))))
+            print ('Train loss: {0:.4f} val loss: {1:.4f} mAP: {2:.4f}'.format(
+                        trainloss, valloss, mAP))
+            # evaluate on validation set
+            is_best = mAP > best_map
+            #if mAP > best_map:
+                #best_map = mAP
+                # checkpoint_name = "%04d_%s" % (epoch+1, "checkpoint.pth.tar")
+            checkpoint_name = "best_checkpoint.pth.tar"
+            save_checkpoint({
+                'epoch': epoch+1,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                }, is_best, epoch)
+            np.save("val.npy", output_mtx)
+        with open(args.record_path, 'a') as file:
+            file.write('Epoch:[{0}]'
+                   'Train loss: {1:.4f} val loss: {2:.4f} map: {3:.4f}\n'.format(
+                    epoch+1, trainloss, valloss, mAP))
 
 
-    print ('************ Done!... ************')
+        print ('************ Done!... ************')
             # train for one epoch
 
 
