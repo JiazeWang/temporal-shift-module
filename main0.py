@@ -21,13 +21,6 @@ from ops.temporal_shift import make_temporal_pool
 
 from tensorboardX import SummaryWriter
 import datetime
-from sklearn.metrics import average_precision_score
-
-def get_map(output, target):
-    n_sample, n_label = output.shape
-    class_ap = average_precision_score(
-        target, output, average=None)
-    return class_ap.mean()
 best_prec1 = 0
 
 
@@ -193,7 +186,6 @@ def main():
     zero_time = time.time()
     best_map = 0
     print ('Start training...')
-    valloss, mAP, wAP, output_mtx = validate(val_loader, model, criterion)
     for epoch in range(args.start_epoch, args.epochs):
         adjust_learning_rate(optimizer, epoch, args.lr_steps)
 
@@ -336,14 +328,7 @@ def validate(val_loader, model, criterion, logger=None):
         labels = np.load(label_path)
         #print("labels.shape:", labels.shape)
         #print("output_mtx.shape:", output_mtx.shape)
-        #mAP, wAP = compute_map(labels, output_mtx)
-        if i == len(val_loader)-1:
-            print(i, len(val_loader))
-            mAP = get_map(labels, output_mtx)
-            np.save("val.npy", output_mtx)
-            print("saving down")
-        wAP=0
-
+        mAP, wAP = compute_map(labels, output_mtx)
 
     return losses / (i+1), mAP, wAP, output_mtx
 
