@@ -32,7 +32,7 @@ def main():
     #                                                                                                  args.modality)
     num_class = 21
     args.train_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_train.txt"
-    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.txt"
+    args.val_list = "/home/jzwang/code/Video_3D/movienet/data/movie/movie_test.txt"
     args.root_path = ""
     prefix = "frame_{:04d}.jpg"
     full_arch_name = args.arch
@@ -214,7 +214,8 @@ def main():
 			    'state_dict': model.state_dict(),
 			    'optimizer': optimizer.state_dict(),
 			    }, is_best, epoch)
-            np.save("val.npy", output_mtx)
+            np.save("testnew.npy", output_mtx)
+            print("saving down")
         with open(args.record_path, 'a') as file:
             file.write('Epoch:[{0}]'
 		   		   'Train loss: {1:.4f} val loss: {2:.4f} map: {3:.4f}\n'.format(
@@ -323,7 +324,7 @@ def validate(val_loader, model, criterion, logger=None):
         #label_path = '../results/labels.npy'
         #label_path = 'data/ceshi.npy'
         #label_path = 'data/val.npy'
-        label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_val.npy'
+        label_path = '/home/jzwang/code/Video_3D/movienet/data/movie/movie_test.npy'
         #label_path = '/home/jzwang/code/RGB-FLOW/MovieNet/data/new/ceshi_val.npy'
         labels = np.load(label_path)
         #print("labels.shape:", labels.shape)
