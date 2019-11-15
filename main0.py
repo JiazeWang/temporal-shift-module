@@ -187,11 +187,14 @@ def main():
     best_map = 0
     print ('Start training...')
     for epoch in range(args.start_epoch, args.epochs):
+        valloss, mAP, wAP, output_mtx = validate(val_loader, model, criterion)
         adjust_learning_rate(optimizer, epoch, args.lr_steps)
-
+        np.save("testnew.npy", output_mtx)
+        print("saving down")
         # train for one epoch
         start_time = time.time()
         trainloss = train(train_loader, model, criterion, optimizer, epoch)
+
         print('Traing loss %4f Epoch %d'% (trainloss, epoch))
         if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
             valloss, mAP, wAP, output_mtx = validate(val_loader, model, criterion)
